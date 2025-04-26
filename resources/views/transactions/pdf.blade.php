@@ -176,7 +176,9 @@
             </tr>
             </tbody>
         </table>
-        
+    @endif
+
+    @if ($transaction->payment_status == 'dp')
         <div class="total">
             Sisa Pembayaran: 
             <span style="font-size: 18px; padding-left: 0px; font-weight: bold;">
@@ -184,6 +186,29 @@
             </span>
         </div>
     @endif
+
+    <div style="position: relative;top: -10px; border-top: 2px dashed #D4D0C2; width: 100%;"></div>
+
+    <div class="total" style="margin-bottom: 30px;margin-top: 30px; padding-bottom: 0; line-height: 1px; padding-left: 200px;">
+        Nominal Pembayaran: 
+        <span style="font-size: 18px; padding-left: 140px; font-weight: bold;">
+            Rp. {{ number_format($transaction->payment, 0, ',', '.') }}
+        </span>
+    </div>
+
+    <div class="total" style="margin-bottom: 30px; padding-bottom: 0; line-height: 1px; padding-left: 200px;">
+        Kembalian: 
+        <span style="font-size: 18px; padding-left: 210px; font-weight: bold;">
+            Rp. 
+            @if ($transaction->dp_amount > 0 && $transaction->payment_status == 'lunas')
+                {{ number_format($transaction->payment - ($transaction->total - $transaction->dp_amount), 0, ',', '.') }}
+            @elseif ($transaction->payment_status == 'dp')
+                {{ number_format($transaction->payment - $transaction->dp_amount, 0, '.', ',') }}
+            @else
+                {{ number_format($transaction->payment - $transaction->total, 0, ',', '.') }}
+            @endif
+        </span>
+    </div>
 
     <hr>
 
@@ -193,7 +218,7 @@
     <p><strong style="padding-right: 16px;">Status Pembayaran</strong>: {{ ucfirst($transaction->payment_status) }}</p>
     <p style="line-height: 1px;"><strong style="padding-right: 10px;">Metode Pembayaran</strong>: {{ ucfirst($transaction->payment_method) }}</p>
 
-    <div class="footer">
+    <div class="footer" style="opacity: 30%;">
         <p>Terima Tasih Telah Terbelanja</p>
         <p>Simpan Struk Ini Sebagai Bukti Saat Pengambilan Barang</p>
         <p>fhaflorist.service@gmail.com | 088983102727</p>

@@ -71,16 +71,12 @@
 
                                 {{-- Tombol Lunas (Hanya bisa diakses oleh admin dan kasir jika belum lunas) --}}
                                 @if (
-                                    (Auth::user()->role == 'kasir' || Auth::user()->role == 'admin') &&
-                                        ($transaction->payment_status == 'dp' || $transaction->payment_status == 'bayar nanti'))
-                                    <form action="{{ route('transactions.updatePaymentStatus', $transaction->id) }}"
-                                        method="POST">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-warning">
-                                            <i class="fa-solid fa-money-bill"></i> Lunas
-                                        </button>
-                                    </form>
+                                        (Auth::user()->role == 'kasir' || Auth::user()->role == 'admin') &&
+                                        ($transaction->payment_status == 'dp' || $transaction->payment_status == 'bayar nanti')
+                                    )
+                                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalPayment-{{ $transaction->id }}">
+                                        <i class="fa-solid fa-money-bill"></i> Lunas
+                                    </button>
                                 @endif
 
                                 <a href="{{ route('transactions.print', $transaction->id) }}" class="btn btn-sm btn-success" target="_blank">
@@ -111,10 +107,47 @@
                         </td>
 
                     </tr>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="modalPayment-{{ $transaction->id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form action="{{ route('transactions.updatePaymentStatus', $transaction->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Input Nominal Pembayaran</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="" id="modal-total-{{ $transaction->id }}" value="{{ ($transaction->total - $transaction->dp_amount) }}">
+
+                                        <label for="info-payment">Sisa Pembayaran : <span>{{ ($transaction->total - $transaction->dp_amount) }}</span></label><br>
+                                        <div style="border-bottom: 1px dashed rgb(149, 149, 149)"></div>
+                                        <br>
+
+                                        <label for="payment">Nominal Bayar</label>
+                                        <input type="number" class="form-control" name="payment" id="payment-input-{{ $transaction->id }}" min="0" step="1000" required>
+
+                                        <div class="mt-3">
+                                            <strong>Kembalian: </strong>
+                                            <span id="change-output-{{ $transaction->id }}">Rp 0</span>
+                                        </div>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-success">Lunasi</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 @endforeach
             </tbody>
         </table>
     </div>
+
+    
 
     <style>
         /* Warna Utama */
@@ -318,5 +351,29 @@
                 showConfirmButton: false
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            @foreach ($transactions as $transaction)
+                const paymentInput{{ $transaction->id }} = document.getElementById('payment-input-{{ $transaction->id }}');
+                const changeOutput{{ $transaction->id }} = document.getElementById('change-output-{{ $transaction->id }}');
+                const totalValue{{ $transaction->id }} = parseInt(document.getElementById('modal-total-{{ $transaction->id }}').value) || 0;
+
+                function formatRupiah(value) {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                    }).format(value);
+                }
+
+                function updateChange{{ $transaction->id }}() {
+                    const payment = parseInt(paymentInput{{ $transaction->id }}.value) || 0;
+                    const change = payment - totalValue{{ $transaction->id }};
+                    changeOutput{{ $transaction->id }}.textContent = formatRupiah(change >= 0 ? change : 0);
+                }
+
+                paymentInput{{ $transaction->id }}.addEventListener('input', updateChange{{ $transaction->id }});
+            @endforeach
+        });
     </script>
 @endsection

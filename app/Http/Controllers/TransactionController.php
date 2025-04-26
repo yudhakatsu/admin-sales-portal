@@ -84,8 +84,6 @@ class TransactionController extends Controller
         return response($html);
     }
 
-
-
     public function store(Request $request)
     {
 
@@ -97,6 +95,7 @@ class TransactionController extends Controller
             'pickup_date' => 'required|date|after_or_equal:order_date',
             'payment_status' => 'required|in:lunas,dp,bayar nanti',
             'payment_method' => 'required|in:cash,transfer',
+            'payment' => 'nullable|numeric|min:0',
             'dp_amount' => 'nullable|numeric|min:0',
             'products' => 'required|array',
             'products.*.id' => 'required|exists:products,id',
@@ -127,6 +126,7 @@ class TransactionController extends Controller
             'pickup_date' => $request->pickup_date,
             'payment_status' => $request->payment_status,
             'payment_method' => $request->payment_method,
+            'payment' => $request->payment_method ==='cash' ? $request->payment : 0,
             'dp_amount' => $request->payment_status === 'dp' ? $request->dp_amount : 0,
             'total' => 0,
             'quantity' => 0,
@@ -149,9 +149,15 @@ class TransactionController extends Controller
             ]);
         }
 
+        $change = 0;
+        $payment = $request->payment_method === 'transfer' ? $totalPrice : $request->payment;
+        $change = $request->payment_status === 'dp' ? $payment - $request->dp_amount : $payment - $totalPrice ;
+
         // Update total harga dan total kuantitas di `transactions`
         $transaction->update([
             'total' => $totalPrice,
+            'payment' => $payment,
+            'change' => $change,
             'quantity' => $totalQuantity,
         ]);
 
@@ -242,12 +248,17 @@ class TransactionController extends Controller
     }
 
 
-    public function updatePaymentStatus($id)
+    public function updatePaymentStatus(Request $request,$id)
     {
         $transaction = Transaction::findOrFail($id);
         
         if ($transaction->payment_status == 'dp' || $transaction->payment_status == 'bayar nanti') {
             $transaction->payment_status = 'lunas';
+
+            $transaction->payment = $request->input('payment');
+            $change = $request->payment - ($transaction->total - $transaction->dp_amount);
+
+            $transaction->change = $change >= 0 ? $change : 0;
         }
         
         $transaction->save();

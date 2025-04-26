@@ -125,6 +125,12 @@
                     placeholder="Masukkan nominal DP" value="{{ $cart->dp_amount }}">
             </div>
 
+            <div class="form-group my-3" id="input_payment" style="{{ $cart->payment_method == 'cash' ? 'display: block;' : 'display: none;' }}; max-width: 42%; display: none;">
+                <label for="payment">Input Nominal Pembayaran</label>
+                <input type="number" id="payment" name="payment" class="form-control" min="0" step="1000"
+                    placeholder="Masukkan nominal" value="{{ $cart->payment }}" readonly>
+            </div>
+
             <div class="mt-3">
                 <h5>Total Harga: Rp <span id="total-price">
                 {{ number_format($cart->total, 0, ',', '.') }}
@@ -238,6 +244,19 @@
             }
         }
 
+        function togglePaymentInput() {
+            const paymentMethod = document.getElementById('payment_method').value;
+            const dpInputPayment = document.getElementById('input_payment');
+            const paymentInfo = document.getElementById('payment');
+            const changeInfo = document.getElementById('change');
+
+            if (paymentMethod === 'cash') {
+                dpInputPayment.style.display = 'block';
+            } else {
+                dpInputPayment.style.display = 'none';
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             // Tangani format DP input
             let dpInput = document.getElementById('dp_amount');
@@ -273,6 +292,10 @@
                 dpInput.value = dpInput.value.replace(/\./g, ""); // Hapus titik sebelum dikirim ke server
             });
         });
+
+        window.onload = function () {
+            togglePaymentInput();
+        };
     </script>
     <style>
         .container {

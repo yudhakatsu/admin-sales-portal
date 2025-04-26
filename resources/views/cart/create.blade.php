@@ -124,11 +124,25 @@
                     placeholder="Masukkan nominal DP" value="{{ $cart->dp_amount }}">
             </div>
 
+            <div class="form-group my-3" id="input_payment" style="{{ $cart->payment_method == 'cash' ? 'display: block;' : 'display: none;' }}; max-width: 42%; display: none;">
+                <label for="payment">Input Nominal Pembayaran</label>
+                <input type="number" id="payment" name="payment" class="form-control" min="0" step="1000"
+                    placeholder="Masukkan nominal" value="{{ $cart->payment }}" readonly>
+            </div>
+
             <div class="mt-3">
                 <h5>Total Harga: Rp <span id="total-price">
                 {{ number_format($cart->total, 0, ',', '.') }}
                 </span></h5>
             </div>
+
+            <div class="mt-3 mb-3">
+                <h5 id="dp_info" style="font-size: 16px; display: none;">Nomimal DP: <span style="padding-left: 93px;">Rp </span> <span id="dp_display" style="padding-left: 4px;">0</span></h5>
+                <h5 style="font-size: 16px;">Nomimal Pembayaran: <span style="padding-left: 10px;">Rp </span> <span id="payment_display" style="padding-left: 4px;">0</span></h5>
+                <h5 style="font-size: 16px;">Uang Kembali: <span style="padding-left: 80px;">Rp </span> <span id="change" style="padding-left: 3px;">0</span></h5>
+            </div>
+
+
             <button type="button" class="btn btn-primary submit-btn" data-action="{{ route('transactions.store') }}">Checkout</button>
             <!-- <button type="button" class="submit-btn btn btn-secondary"
                 data-action="{{ route('cart.update', $cart->id) }}">
@@ -241,6 +255,19 @@
             }
         }
 
+        function togglePaymentInput() {
+            const paymentMethod = document.getElementById('payment_method').value;
+            const dpInputPayment = document.getElementById('input_payment');
+            const paymentInfo = document.getElementById('payment');
+            const changeInfo = document.getElementById('change');
+
+            if (paymentMethod === 'cash') {
+                dpInputPayment.style.display = 'block';
+            } else {
+                dpInputPayment.style.display = 'none';
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             // Tangani format DP input
             let dpInput = document.getElementById('dp_amount');
@@ -276,6 +303,64 @@
                 dpInput.value = dpInput.value.replace(/\./g, ""); // Hapus titik sebelum dikirim ke server
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputPayment = document.querySelector('#input_payment input');
+            const totalPriceEl = document.getElementById('total-price');
+            const paymentDisplay = document.getElementById('payment_display');
+            const dpInput = document.getElementById('dp_amount');
+            const dpDisplay = document.getElementById('dp_display');
+            const changeEl = document.getElementById('change');
+            const paymentStatusEl = document.getElementById('payment_status');
+            const paymentMethodEl = document.getElementById('payment_method');
+
+            function formatRupiah(value) {
+                return new Intl.NumberFormat('id-ID').format(value);
+            }
+
+            function updatePaymentAndChange() {
+                const paymentMethodEll = paymentMethodEl.value;
+
+                if (paymentMethodEll === 'transfer') {
+                    paymentDisplay.textContent = '-';
+                    changeEl.textContent = '-';
+                    return;
+                }
+
+                const payment = parseInt(inputPayment.value) || 0;
+                const total = parseInt(totalPriceEl.textContent.replace(/\D/g, '')) || 0;
+                const dpValue = parseInt(dpInput.value) || 0;
+                const paymentStatusEll = paymentStatusEl.value;
+
+                paymentDisplay.textContent = formatRupiah(payment);
+
+                let change = 0;
+                if (paymentStatusEll == 'dp'){
+                    change = payment - dpValue;
+                } else {
+                    change = payment - total;
+                }
+
+                changeEl.textContent = formatRupiah(change >= 0 ? change : 0);
+            }
+
+            function updateDPDisplay() {
+                const dpValue = parseInt(dpInput.value) || 0;
+
+                dpDisplay.textContent = formatRupiah(dpValue);
+                updatePaymentAndChange();
+            }
+
+
+            inputPayment.addEventListener('input', updatePaymentAndChange);
+            dpInput.addEventListener('input', updateDPDisplay);
+            paymentStatusEl.addEventListener('change', updatePaymentAndChange);
+            paymentMethodEl.addEventListener('change', updatePaymentAndChange);
+        });
+
+        window.onload = function () {
+            togglePaymentInput();
+        };
     </script>
     <style>
         .container {

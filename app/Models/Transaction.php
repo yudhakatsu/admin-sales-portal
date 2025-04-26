@@ -17,6 +17,8 @@ class Transaction extends Model {
         'order_date',
         'pickup_date',
         'total',
+        'payment',
+        'change',
         'quantity',
         'note',
         'payment_status',

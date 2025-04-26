@@ -18,6 +18,7 @@ class Cart extends Model
         'address',
         'pickup_date',
         'total',
+        'payment',
         'payment_status',
         'payment_method',
         'dp_amount',
