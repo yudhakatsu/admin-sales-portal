@@ -16,7 +16,8 @@
 
                 <div class="mb-3 col-5 position-relative">
                     <label for="phone-number" class="form-label">No Hp</label>
-                    <input type="text" class="form-control" id="phone_number" name="phone_number" required>
+                    <input type="text" class="form-control" id="phone_number" name="phone_number"
+                     minlength="11" maxlength="13" pattern="\d{11,13}" title="Masukkan nomor HP antara 11 hingga 13 digit" required>
                     <ul id="phone-list" class="list-group" style="display:none; position: absolute; z-index: 10;"></ul>
                 </div>
             </div>
